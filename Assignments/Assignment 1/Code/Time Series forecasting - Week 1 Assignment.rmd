@@ -1,0 +1,263 @@
+---
+output: html_document
+header-includes:
+   - /usepackage{bbm}
+---
+<center>
+<div style="width:800px; height=300px">
+![alt text](/Users/AKSHAY/Dropbox/UChicago/MScA_UChicago/Other/UChicagoLogo.png)
+</div>
+<br>
+
+<header><b>
+<font size=5>
+Time Series Analysis and Forecasting: Assignment 1
+</header>
+</center>
+</font>
+<center>
+</b> 
+
+<b>Submitted by: </b>Akshay Chhabra, James Foster and Susan Parker<br>
+<b>Professor: </b>Vadim Sokolov<br>
+<b>TA: </b>Danny Ng<br>
+<b>Submitted on: </b>July 13, 2015<br>
+</center>
+
+
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 1000)
+```
+
+```{r setup,echo=FALSE,message=FALSE,warning=FALSE}
+library(knitr)
+library(lmtest)
+library(quantmod)
+library(lubridate)
+opts_knit$set(root.dir = "/Users/AKSHAY/Dropbox/UChicago/MScA_UChicago/Courses/Time Series Forecasting/Assignments/Week 1/Data")
+```
+```{r echo=FALSE}
+setwd("/Users/AKSHAY/Dropbox/UChicago/MScA_UChicago/Courses/Time Series Forecasting/Assignments/Week 1/Data")
+```
+
+<br><b>Problem 1:</b><br>
+A classic example of a non-stationary series is the daily closing stock prices. Download a OHLC data of a stock from Google Finance. You can change a ticker to your favorite stock. Plot the daily closing prices for the stock and the ACF.Explain how each plot shows the series is non-stationary and should be differenced.
+<br><b>Answer:</b><br>
+
+<b>Get the data- We will read the data for two stocks- Google and Walmart</b><br>
+```{r}
+
+getSymbols("GOOGL",src='google')
+getSymbols("WMT",src='google')
+```
+<b>Next let's find the daily close price of the stocks and the Autocorrelation function using the ACF R function</b><br>
+```{r}
+A = Cl(GOOGL)
+B=Cl(WMT)
+acf.Google<-acf(A ,type="correlation",lag.max = 60, plot = F)
+acf.Walmart<-acf(B ,type="correlation",lag.max = 60, plot = F)
+```
+<br><b>Finally, lets plot the daily close prices and the ACF</b><br>
+```{r}
+plot(A,main="Google")
+plot(x=0:60,y=acf.Google$acf,type='p',main = "Google",xlab="Lag", ylab="ACF",lwd=1, ylim=c(0,1))
+lines(acf.Google$lag,acf.Google$acf,type='h')
+
+plot(B,main="Walmart")
+plot(x=0:60,y=acf.Walmart$acf,type='p',main="Walmart", xlab="Lag", ylab="ACF",lwd=1, ylim=c(0,1))
+lines(acf.Google$lag,acf.Walmart$acf,type='h')
+```
+<br><b>Analysis:</b>
+<ul>
+<li><b>Closing price plot-</b> In the plots of the closing prices for both Google and Walmart, there seems to be visible trend and a seasonality elements. The stocks prices for both these companies have gone up in the past few years, which explain the upward trend. The seasonality could be beacuse of the quarterly reports. Due to the existence of the trend and seasonality components, the first two moments are not constant and thus both the series are not stationary.
+<li><b>ACF plot-</b> The ACF plots of both the stocks show that there is correlation between the lags. Even lags till 60 are affecting the current stock price.Thus, the series of the closing prices is not stationary
+</ul>
+<br>
+**________________________________________________________________________________________________________________**
+<br>
+<br><b>Problem 2:</b><br>
+Plot the ACFs for 36 random numbers, 360 random numbers and for 1,000 random numbers.Explain the differences among these figures. Do they all indicate the data are white noise? Why are the critical values at different distances from the mean of zero? Why are the autocorrelations different in each figure when they each refer to white noise?
+<br><b>Answer:</b><br>
+
+
+The blue lines in the below plots are the bounds for statistical significance.  
+
+```{r}
+plot(acf(rnorm(36)),ylim=c(-0.5,0.5))
+plot(acf(rnorm(360)),ylim=c(-0.5,0.5))
+plot(acf(rnorm(1000)),ylim=c(-0.5,0.5))
+```
+<br><b>Analysis:<br></b>
+With the exception of lag 0, which is always 1 by definition, almost all of the autocorrelations fall within the confidence limits. In addition, there is no apparent pattern. This is the absence of a pattern we expect to see if the data are in fact random. A few lags slightly outside the confidence limits do not neccessarily indicate non-randomness. Thus the data are white noise. With a smaller sample size, it is easy to misunderstand the plot given that the correlations seem high. As we increase the sample size, the correlation and thus the confidence intervals decrease. It becomes clearer that the correlations are due to randomness. Critical values are based up the number of records accessed with more records corresponding to tighter limits.  For each data set, the autocorrelations are different because each data set is an independent draw of random numbers.  
+<br>
+**________________________________________________________________________________________________________________**
+<br>
+<br><b>Problem 3:</b><br>
+Google maintains records of the popularity of search terms over time at http://www.google.com/trends. You can examine daily data by selecting a time period of less than 90 days, otherwise you'll see weekly or monthly data. The numbers reported are relative search volume (you can read more about it at https://support.google.com/trends/answer/4355164?hl=en&rd=1. Your task is to find:
+<ol>
+<li>one search term dominated by a weekly or annual seasonal pattern
+<li>one search term dominated by an increasing trend
+<li>one search term that would be poorly described by a combination of trend and seasonality
+</ol>
+In each case, you should download the relevant data as a .csv file (click on the settings in the top right corner on the trends page), read the data into R and produce a plot of the data.
+<br><b>Answer:</b><br>
+<ol>
+<li><b>One search term dominated by a weekly or annual seasonal pattern</b><br>
+<b>Read the data</b><br>
+```{r warning=FALSE}
+seasonal<-read.csv("Seasonality- spring- report.csv",sep=",",skip = 4,stringsAsFactors = F,nrows = 600)
+head(seasonal)
+```
+<br><b>Extract the week beginning day from the data and then plot the normalized number of searches for the term "Spring"</b><br>
+```{r warning=FALSE}
+seasonal$week.begin=as.vector(substr(seasonal$Week,1,10))
+plot(parse_date_time(seasonal$week.begin,"%y %m %d"),seasonal$spring,data=seasonal,type="l",xlab="Week Beginning day",ylab="Normalized No. of searches for the term 'Spring'",main="Seasonality in the no. of searches for the term 'Spring'")
+```
+<br>The seasonality in the data is clearly visible. 
+
+<li><b>One search term dominated by an increasing trend</b><br>
+<b>Read the data</b><br>
+```{r warning=FALSE}
+Trend<-read.csv("Trend- Google- report.csv",sep=",",skip = 4,stringsAsFactors = F,nrows = 600)
+head(Trend)
+```
+<br><b>Extract the week beginning day from the data and then plot the normalized number of searches for the term "Google"</b><br>
+```{r warning=FALSE}
+Trend$week.begin=as.vector(substr(Trend$Week,1,10))
+plot(parse_date_time(Trend$week.begin,"%y %m %d"),Trend$google,type="l",xlab="Week Beginning day",ylab="Normalized No. of searches for the term 'Google'",main="Trend in the no. of searches for the term 'Google'")
+```
+<br>The increasing trend in the data is clearly visible. 
+
+<li><b>One search term that would be poorly described by a combination of trend and seasonality</b><br>
+<b>Read the data</b><br>
+```{r warning=FALSE}
+Trend.Seasonal<-read.csv("NBA- report.csv",sep=",",skip = 4,stringsAsFactors = F,nrows = 600)
+head(Trend.Seasonal)
+```
+<br><b>Extract the week beginning day from the data and then plot the normalized number of searches for the term "Google"</b><br>
+```{r warning=FALSE}
+Trend.Seasonal$week.begin=as.vector(substr(Trend.Seasonal$Week,1,10))
+plot(parse_date_time(Trend.Seasonal$week.begin,"%y %m %d"),Trend.Seasonal$nba,type="l",xlab="Week Beginning day",ylab="Normalized No. of searches for the term 'NBA'",main="Trend in the no. of searches for the term 'NBA'")
+```
+<br>The increasing trend and seasonality during NBA season in the data is clearly visible. 
+</ol>
+<br>
+**________________________________________________________________________________________________________________**
+<br>
+<br><b>Problem 4:</b><br>
+(Shumway 1.6) Consider the time series
+$x_{t}=\beta_{1} + \beta_{2}t + w_{t}$
+where $\beta_{1} and \beta_{2}$ are known constants and $w_{t}$ is the white noise proces with variance $\sigma^2_{w}$
+<ol>
+<li>Determine whether $x_{t}$ is stationary.
+<li>Show that the process $y_{t} = x_{t} - x_{t-1}$ is stationary
+</ol>
+<br><b>Answer:</b><br>
+<ol>
+<li><b>Determine whether $x_{t}$ is stationary.</b><br>
+In order for $x_{t}$ to be stationary, its statistical properties such as its mean should be constant over time.<br>
+$E(x_{t})=E(\beta_{1} + \beta_{2}t + w_{t})$<br>
+Since $E(w_{t})=0$, we get<br>
+$E(x_{t})=\beta_{1}+\beta_{2}t$<br>
+Since the mean depends on time t, $x_{t}$ is not stationary
+<li><b>Show that the process $y_{t} = x_{t} - x_{t-1}$ is stationary<br></b>
+First lets check for the mean<br>
+$E(y_{t}) = E(x_{t}) - E(x_{t-1})$<BR>
+$=\beta_{1}+\beta_{2}t - =\beta_{1}-\beta_{2}(t-1)$
+$=\beta_{2}$<br>
+The mean is indpendent of time<br>
+Next lets check for the autocovariance<br>
+$cov(y_{t+h},y_{t})$<br>
+$=E(y_{t+h}y_{t}) - E(y_{t+h})E(y_{t})$<br>
+$=E((x_{t+h}-x_{t+h-1})(x_{t}-x_{t-1}))-E(x_{t+h}-x_{t+h-1})E(x_{t}-x_{t-1})$<br>
+$=E((\beta_{2}(t+h)+w_{t+h}-\beta_{2}(t+h-1)-w_{t+h-1})(\beta_{2}(t)+w_{t}-\beta_{2}(t-1)-w_{t-1}))-$<br>
+$\hspace{5 mm}E(\beta_{2}(t+h)+w_{t+h}-\beta_{2}(t+h-1)-w_{t+h-1})E(\beta_{2}(t)+w_{t}-\beta_{2}(t-1)-w_{t-1})$<br>
+$=E((\beta_{2}+w_{t+h}-w_{t+h-1})(\beta_{2}+w_{t}-w_{t-1}))-E(\beta_{2}+w_{t+h}-w_{t+h-1})E(\beta_{2}+w_{t}-w_{t-1})$<br>
+We know that $E(w_{t})=0 \hspace{2 mm} and \hspace{2 mm} E(w_{t}^2=\sigma^2)$. Thus, we get
+$=\beta_{2}^2+E(w_{t+h}w_{t})-E(w_{t+h}w_{t-1})-E(w_{t+h-1}w_{t})+E(w_{t+h-1}w_{t-1})-\beta_{2}^2$<br>
+$=E(w_{t+h}w_{t})-E(w_{t+h}w_{t-1})-E(w_{t+h-1}w_{t})+E(w_{t+h-1}w_{t-1})$<br><br>
+Thus, $cov(y_{t+h},y_{t})$<br>
+$= \begin{cases}  2\sigma^2 & if\hspace{2 mm} h=0\\  -\sigma^2 & if\hspace{2 mm} h= 1\\ 0 & Otherwise \end{cases}$<br>
+This shows that the autocovariance is independent of time.<br>
+Now, since the mean and the autocovariance are independent of time, $y_{t}$ is stationary.
+
+</ol>
+<br>
+**________________________________________________________________________________________________________________**
+<br>
+<br><b>Problem 5:</b><br>
+Let $x_{t}$ be a stationary time series, and define
+
+$y_{t}= \begin{cases}  x_{t} & for\hspace{2 mm} t \hspace{2 mm} odd \\  x_{t}+3 & for\hspace{2 mm} t\hspace{2 mm} even   \end{cases}$
+
+<ol>
+<li>Show that $cov(y_{t}, y_{t+h})$ does not depend on t
+<li>Is $y_{t}$ stationary?
+</ol>
+
+<br><b>Answer:</b><br>
+Since $x_{t}$ is stationary, we know that the $cov(x_{t+h},x_{t})$ is independent of time t (This is a requirement of stationarity)<br>
+<ol>
+<li>$cov(y_{t+h},y_{t})= E(y_{t+h}y_{t}) - E(y_{t+h})E(y_{t})$<br><br>
+  <ol>
+  <li>When t is odd<br>
+  $cov(y_{t+h},y_{t})$<br>
+  $= E(y_{t+h}y_{t}) - E(y_{t+h})E(y_{t})$<br>
+  $= E(x_{t+h}x_{t}) - E(x_{t+h})E(x_{t})$<br>
+  $=cov(x_{t+h},x_{t})$<br>
+  Which we know is independent of time t
+  <li>When t is even<br>
+  $cov(y_{t+h},y_{t})$<br>
+  $= E(y_{t+h}y_{t}) - E(y_{t+h})E(y_{t})$<br>
+  $= E((x_{t+h}+3)(x_{t}+3)) - E(x_{t+h}+3)E(x_{t}+3)$<br>
+  $= E(x_{t+h}x_{t}+3x_{t+h}+3x_{t}+9) - (E(x_{t+h})+3)(E(x_{t})+3)$<br>
+  $= E(x_{t+h}x_{t})+3E(x_{t+h})+3E(x_{t})+9 - E(x_{t+h})E(x_{t}) - 3E(x_{t}) -3E(x_{t+h}) -9$<br>
+  $= E(x_{t+h}x_{t}) - E(x_{t+h})E(x_{t})$<br>
+  $=cov(x_{t+h},x_{t})$<br>
+  Which we know is independent of time t<br>
+  Thus, $cov(y_{t}, y_{t+h})$ does not depend on time
+  </ol>
+<li>In order for $y_{t}$ to be stationary, its statistical properties should be constant over time. We already know that the autocovariance of $y_{t}$ is independent of time. Lets look at mean. <br>
+$E(y_{t})= \begin{cases}  E(x_{t}) & for\hspace{2 mm} t \hspace{2 mm} odd \\  E(x_{t})+3 & for\hspace{2 mm} t\hspace{2 mm} even   \end{cases}$<br>
+We know that $E(x_{t})$ is constant since $x_{t}$ is stationary. Thus,<br>
+$E(y_{t})= \begin{cases}  Constant & for\hspace{2 mm} t \hspace{2 mm} odd \\  Constant +3 & for\hspace{2 mm} t\hspace{2 mm} even   \end{cases}$<br>
+Since the mean of $y_{t}$ is dependent on time t, it is not stationary. <br>
+</ol>
+
+<br>
+**________________________________________________________________________________________________________________**
+<br>
+<br><b>Problem 6:</b><br>
+Consider the following time series model:
+$x_{t} = w_{t-1} + 2w_{t} + w_{t+1}$
+
+where the $w_{t}$ are a white noise process with variance $\sigma^2$. Determine the autocovariance and autocorrelation functions of $x_{t}$.
+
+<br><b>Answer:</b><br>
+<b>Autocovariance</b> <br>
+$=\gamma x(t+h,t)$<br>
+$= E(x_{t+h}x_{t}) - E(x_{t+h})E(x_{t})$<br><br>
+Since $E(x_{t})=E(x_{t+h})=0$, Autocovariance<br><br>
+$= E(x_{t+h}x_{t})$<br>
+$=E((w_{t-1+h} + 2w_{t+h} + w_{t+1+h})(w_{t-1} + 2w_{t} + w_{t+1}))$<br><br>
+$= \begin{cases}  6\sigma^2 & if\hspace{2 mm} h=0\\  4\sigma^2 & if\hspace{2 mm} h=\pm 1\\ 0 & Otherwise \end{cases}$
+<br>
+where we used that $E(w_{t1}w_{t2})=0, E(w_{t})=0 \hspace{2 mm} and \hspace{2 mm} E(w_{t}^2)=\sigma^2$
+
+<br>
+<b>Autocorrelation function</b><br>
+<font size=5>
+$=\frac {\gamma (h)}{\gamma (0)}$<br>
+$=\frac {cov(x_{t+h},x_{t})} {cov(x_{t},x_{t})}$<br></font>
+Since $E(x_{t})=E(x_{t+h})=0$, Autocorrelation<br><br>
+<font size=5>
+$=\frac {E((x_{t+h})(x_{t}))} {E((x_{t})(x_{t}))}$<br>
+$=\frac {E((w_{t-1+h} + 2w_{t+h} + w_{t+1+h})(w_{t-1} + 2w_{t} + w_{t+1}))} {6\sigma^2}$<br><br>
+</font>
+$= \begin{cases}  1 & if\hspace{2 mm} h=0\\  \frac {2}{3} & if\hspace{2 mm} h=\pm 1\\ 0 & Otherwise \end{cases}$
+<br>
+where we used that $E(w_{t1}w_{t2})=0, E(w_{t})=0 \hspace{2 mm} and \hspace{2 mm} E(w_{t}^2)=\sigma^2$
+
+<br>
+<h4>
+<b><center>------------------------------------------End of Document ------------------------------------------</b></center></h4>
