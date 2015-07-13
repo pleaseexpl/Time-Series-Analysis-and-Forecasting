@@ -11,7 +11,7 @@ header-includes:
 
 <header><b>
 <font size=5> 
-Time Series Analysis and Forecasting: Assignment 1
+Time Series Analysis and Forecasting: Assignment 1 
 </header>
 </center>
 </font>
