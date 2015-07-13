@@ -14,7 +14,7 @@
 <b>TA: </b>Danny Ng<br>
 
 <br>
-The repository will contain the assingnments and the Course project for the Time series analysis and Forecasting course of the MS in Analytics program of the University of Chicago.The current content is as below: 
+The repository will contain the assignnments and the Course project for the Time series analysis and Forecasting course of the MS in Analytics program of the University of Chicago.The current content is as below: 
 <ul>
 <li>Assignments
  <ul>
