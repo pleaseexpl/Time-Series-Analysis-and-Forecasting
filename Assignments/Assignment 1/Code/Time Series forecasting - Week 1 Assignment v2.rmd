@@ -152,9 +152,9 @@ head(Trend.Seasonal)
 <br><b>Extract the week beginning day from the data and then plot the normalized number of searches for the term "Obama"</b><br>
 ```{r warning=FALSE}
 Trend.Seasonal$week.begin=as.vector(substr(Trend.Seasonal$Week,1,10))
-plot(parse_date_time(Trend.Seasonal$week.begin,"%y %m %d"),Trend.Seasonal$nba,type="l",xlab="Week Beginning day",ylab="Normalized No. of searches for the term 'Obama'",main="Trend in the no. of searches for the term 'Obama'")
+plot(parse_date_time(Trend.Seasonal$week.begin,"%y %m %d"),Trend.Seasonal$obama,type="l",xlab="Week Beginning day",ylab="Normalized No. of searches for the term 'Obama'",main="Trend in the no. of searches for the term 'Obama'")
 ```
-<br>There doesn't seem to be any seasonality of trend component. 
+<br>There doesn't seem to be any seasonality or trend component. 
 </ol>
 <br>
 **________________________________________________________________________________________________________________**
